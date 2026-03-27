@@ -1,4 +1,4 @@
-# Portfolio Backend: Il Motore Dietro le Quinte
+# Portfolio Backend
 
 Ho creato il mio **Portfolio personale** per avere un sito vetrina dove poter raccontare chi sono, mostrare le mie competenze informatiche e i miei progetti scolastici. Essendo un progetto in sviluppo, continuerò ad aggiornarlo man mano che acquisisco nuove competenze.
 
