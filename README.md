@@ -32,6 +32,9 @@ Ecco i brevi passaggi che ho seguito per configurare (o per sistemare/ricreare i
 > Se dovessi fare modifiche ai file in locale su VS Code (e poi _pusharli_ su GitHub), per aggiornare il sito online mi basterà aprire nuovamente il terminale *Bash* su PythonAnywhere, digitare `git pull` per ricevere le variazioni, e poi sulla pagina **"Web"** premere il grosso bottone verde **"Reload"** per far riavviare il servizio.
 
 ---
+## Links
+link per visualizzare i messaggi del form (db remoto): https://simonkolaaa.pythonanywhere.com/api/contacts
+---
 
 ## Struttura del Progetto
 
