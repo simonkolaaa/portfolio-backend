@@ -26,4 +26,6 @@ def add_contact():
 def get_contacts():
     # Rotta per leggere tutti i messaggi ricevuti (solo a scopo di test)
     contacts = contact_repository.get_all_contacts()
-    return jsonify([dict(c) for c in contacts]), 200
+    response = jsonify([dict(c) for c in contacts])
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    return response, 200

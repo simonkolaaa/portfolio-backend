@@ -7,7 +7,8 @@ def get_db():
     # Se la connessione c'è già, la riusiamo. Se no, la creiamo.
     if 'db' not in g:
         g.db = sqlite3.connect(
-            current_app.config['DATABASE']
+            current_app.config['DATABASE'],
+            isolation_level=None
         )
         # Questa riga serve per poter chiamare le colonne per nome (user['username'])
         g.db.row_factory = sqlite3.Row
