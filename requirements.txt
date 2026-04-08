@@ -2,3 +2,11 @@ Flask
 Flask-Cors
 requests
 python-dotenv
+langchain
+langchain-community
+langchain-chroma
+langchain-google-genai
+langchain-ollama
+pysqlite3-binary
+pypdf
+docx2txt
