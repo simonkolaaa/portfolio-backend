@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, jsonify
 from flask_cors import CORS
 
 def create_app():
@@ -13,6 +13,16 @@ def create_app():
         SECRET_KEY='portfolio-secret',
         DATABASE=os.path.join(app.instance_path, 'portfolio.sqlite'),
     )
+
+    # Gestore errori globale per le API: 
+    # Anche se il server crasha (500), restituiamo JSON + CORS così il client capisce l'errore
+    @app.errorhandler(500)
+    def internal_error(error):
+        response = jsonify({"error": "Errore interno del server", "details": str(error)})
+        response.status_code = 500
+        # Forziamo CORS anche sull'errore
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        return response
 
     from . import db
     db.init_app(app)
