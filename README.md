@@ -9,7 +9,7 @@ Invece di partire da zero, ho deciso di prendere come struttura il **"Blog Scola
 L'ho modificata e riadattata per servire esclusivamente come **API** (Backend) in grado di comunicare col frontend React.
 
 ### Dashboard Messaggi nuova
-Invece di vedere i messaggi nel formato grezzo JSON, ora la rotta `/api/contacts` restituisce una vera e propria **Dashboard HTML professionale**.
+Invece di vedere i messaggi nel formato grezzo JSON, ora la rotta `/api/contacts` restituisce una **Dashboard HTML professionale**.
 Sempre su richiesta del professore, ho usato **Jinja2** per creare un'interfaccia **Monochrome (Bianco e Nero)** , con un pulsante dinamico per passare dalla modalità Chiara alla modalità Scura.
 
 ### Cosa ho usato e Perché
