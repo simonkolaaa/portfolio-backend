@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, render_template
 from app.repositories import contact_repository
 import logging
 
@@ -37,14 +37,11 @@ def add_contact():
 
 @bp.route('/contacts', methods=['GET'])
 def get_contacts():
-    """Ritorna tutti i messaggi (per test)."""
+    """Ritorna la Dashboard HTML con tutti i messaggi ricevuti."""
     try:
         contacts = contact_repository.get_all_contacts()
-        response = jsonify([dict(c) for c in contacts])
-        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
-        return response, 200
+        # Invece del JSON, renderizziamo il template HTML premium
+        return render_template('contacts.html', contacts=contacts)
     except Exception as e:
+        # In caso di errore estremo, restituiamo un JSON per debug
         return jsonify({"error": str(e)}), 500
-
-# Nota: La rotta Arus AI è stata rimossa per massimizzare la stabilità del server.
-# Il codice di logica rimane disponibile nella cartella 'core/' per usi futuri.
