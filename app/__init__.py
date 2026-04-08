@@ -3,11 +3,11 @@ from flask import Flask
 from flask_cors import CORS
 
 def create_app():
-    # Mantiene la tipica Factory Pattern che avevi usato a scuola
+    # Factory Pattern
     app = Flask(__name__, instance_relative_config=True)
     
-    # Aggiungiamo i CORS per permettere al Frontend React di contattare Flask
-    CORS(app) 
+    # Configurazione CORS esplicita per autorizzare il frontend
+    CORS(app, resources={r"/api/*": {"origins": ["https://simonkolaaa.github.io", "http://localhost:3000"]}}) 
 
     app.config.from_mapping(
         SECRET_KEY='portfolio-secret',
@@ -17,7 +17,7 @@ def create_app():
     from . import db
     db.init_app(app)
 
-    # Invece di 'main' e 'auth', registriamo un blueprint per le 'api'
+    # Registriamo il blueprint per le API
     from . import api
     app.register_blueprint(api.bp)
 
