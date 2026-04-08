@@ -6,8 +6,8 @@ def create_app():
     # Factory Pattern
     app = Flask(__name__, instance_relative_config=True)
     
-    # Configurazione CORS esplicita per autorizzare il frontend
-    CORS(app, resources={r"/api/*": {"origins": ["https://simonkolaaa.github.io", "http://localhost:3000"]}}) 
+    # CORS TOTALMENTE PERMISSIVO per evitare errori di rete sul frontend
+    CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True) 
 
     app.config.from_mapping(
         SECRET_KEY='portfolio-secret',
