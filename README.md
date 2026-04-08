@@ -2,17 +2,15 @@
 
 Ho creato il mio **Portfolio personale** per avere un sito vetrina dove poter raccontare chi sono, mostrare le mie competenze informatiche e i miei progetti scolastici. Essendo un progetto in sviluppo, continuerò ad aggiornarlo man mano che acquisisco nuove competenze.
 
-Su consiglio del mio **professore di informatica**, ho deciso di integrare un **Backend** al portfolio. Volevo che il form di contatto creato nella sezione *Get in Touch* funzionasse realmente, collegandosi a un server privato.
+Su consiglio del mio **professore di informatica**, ho deciso di integrare un **Backend** al portfolio. Volevo che il form di contatto creato nella sezione *Contatti* funzionasse realmente, collegandosi a un server privato.
 
-### Novità dell'ultimo aggiornamento (Super-Stabilità)
-Recentemente ho effettuato un importante lavoro di stabilizzazione del backend:
-- **CORS Universale:** Per evitare errori di rete ("Impossibile contattare il server"), ho configurato le API per rispondere in modo sicuro a ogni richiesta proveniente dal mio frontend.
-- **Isolamento Moduli:** Ho separato la logica del form da quella di Arus AI. Anche se un modulo dovesse avere problemi, il form continuerà a funzionare correttamente.
-- **Autogestione delle cartelle:** Il server ora è più intelligente e crea da solo le cartelle necessarie (come `instance/`) se mancano al primo avvio.
+### Architettura
+Invece di partire da zero, ho deciso di prendere come struttura il **"Blog Scolastico"** che avevamo sviluppato in classe con Flask.
+L'ho modificata e riadattata per servire esclusivamente come **API** (Backend) in grado di comunicare col frontend React.
 
-### Dashboard Messaggi Premium
+### Dashboard Messaggi nuova
 Invece di vedere i messaggi nel formato grezzo JSON, ora la rotta `/api/contacts` restituisce una vera e propria **Dashboard HTML professionale**.
-Sempre su richiesta del professore, ho usato **Jinja2** per creare un'interfaccia **Monochrome (Bianco e Nero)** ad alto contrasto, con un pulsante dinamico per passare dalla modalità Chiara alla modalità Scura.
+Sempre su richiesta del professore, ho usato **Jinja2** per creare un'interfaccia **Monochrome (Bianco e Nero)** , con un pulsante dinamico per passare dalla modalità Chiara alla modalità Scura.
 
 ### Cosa ho usato e Perché
 
@@ -21,36 +19,37 @@ Sempre su richiesta del professore, ho usato **Jinja2** per creare un'interfacci
 - **Sicurezza (Flask-CORS):** Fondamentale per far comunicare il frontend React con le API Flask senza blocchi di sicurezza del browser.
 - **Database (SQLite):** Per salvare i messaggi in ingresso. È leggero, affidabile e non richiede database esterni pesanti.
 - **Hosting Cloud (PythonAnywhere):** Scelto per la sua comodità e perché permette di mantenere persistente il file SQLite locale.
+- **Sicurezza (Flask-CORS):** Ho implementato i CORS per assicurarmi che solo le richieste in entrata dal mio sito Portfolio ufficiale venissero accettate dall'API protetta.
 
 ---
 
 ## Messa in Produzione su PythonAnywhere
+Per pubblicare l'API e renderla ascoltante su internet giorno e notte, ho eseguito il deploy direttamente sul cloud.
+Ecco i brevi passaggi che ho seguito per configurare (o per sistemare/ricreare il progetto in caso di bisogno):
+1. **Clonazione da GitHub:** Si accede alla console *Bash* cloud di PythonAnywhere e si esegue il `git clone` di questo repository per avere tutti i file sul server.
+2. **Installazione Dipendenze:** Nel terminale (dentro la cartella del progetto) si installano le librerie base con `pip3 install --user -r requirements.txt`.
+3. **Inizializzazione Database:** Si avvia lo script locale con `python3 setup_db.py`, che genera il nuovo file vuoto di database `portfolio.sqlite` usando lo schema SQL per accogliere i messaggi.
+4. **Endpoint WSGI:** Infine, nella sezione **"Web"** di PythonAnywhere, si inizializza una nuova *Web App Manuale* per Python 3.12. Attraverso il file di configurazione `WSGI`, si collegano le rotte del webserver alla mia "Application Factory" di Flask per rispondere ufficialmente all'indirizzo HTTPS generato in origine, abilitando così la POST dal form.
 
-1. **Clonazione:** Si accede alla console *Bash* e si esegue il `git clone`.
-2. **Setup Ambiente:** Si installano le librerie con `pip3 install -r requirements.txt`. (Assicurati di avere `flask-cors`, `requests` e `python-dotenv`).
-3. **Inizializzazione:** Si avvia `python3 setup_db.py` per generare il file `portfolio.sqlite`.
-4. **Reload:** Nella sezione **"Web"** si preme il bottone **"Reload"** per attivare le modifiche.
-
+> **Come Aggiornare il Codice Live:**
+> Se dovessi fare modifiche ai file in locale su VS Code (e poi _pusharli_ su GitHub), per aggiornare il sito online mi basterà aprire nuovamente il terminale *Bash* su PythonAnywhere, digitare `git pull` per ricevere le variazioni, e poi sulla pagina **"Web"** premere il grosso bottone verde **"Reload"** per far riavviare il servizio.
 ---
 ## Links
 - **Link dashboard messaggi:** [https://simonkolaaa.pythonanywhere.com/api/contacts](https://simonkolaaa.pythonanywhere.com/api/contacts)
 ---
 
-## Struttura del Progetto
+## Struttura del Progetto (in continuo sviluppo)
 
 ```text
-├── app/
-│   ├── __init__.py           <-- Factory, CORS config & Global Error Handler
-│   ├── api.py                <-- Route d'ascolto e Dashboard HTML
-│   ├── db.py                 <-- Connessione al DB con autocreazione cartelle
-│   ├── templates/
-│   │   └── contacts.html     <-- Dashboard dinamica (Light/Dark Mode)
-│   └── repositories/         <-- Logica di salvataggio messaggi
-├── core/                     <-- Moduli logica avanzata (IA e Memoria)
-├── config.py                 <-- File di configurazione unificato
-├── schema.sql                <-- Schema SQL per la tabella contacts
-├── run.py                    <-- Entry point locale
-└── setup_db.py               <-- Script di inizializzazione DB
+│   ├── __init__.py           <-- Factory (create_app) & CORS config
+│   ├── api.py                <-- Route d'ascolto (POST /api/contact)
+│   ├── db.py                 <-- Connessione al Database
+│   └── repositories/
+│       └── contact_repo.py   <-- Gestione queries SQLite pulite (INSERT)
+├── instance/
+│   └── portfolio.sqlite      <-- Il file in cui vengono salvati i messaggi
+├── schema.sql                <-- Schema base della tabella contacts
+├── run.py                    <-- Entry point per avviare il server (localhost:5000)
+└── setup_db.py               <-- Script per inizializzare il DB da zero
 ```
 
-Il server remoto è ora ospitato stabilmente, è resiliente agli errori e presenta una dashboard professionale curata nei minimi dettagli.
