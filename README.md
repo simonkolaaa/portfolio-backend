@@ -52,4 +52,36 @@ Ecco i brevi passaggi che ho seguito per configurare (o per sistemare/ricreare i
 ├── run.py                    <-- Entry point per avviare il server (localhost:5000)
 └── setup_db.py               <-- Script per inizializzare il DB da zero
 ```
+## Nuove Funzionalità e Requisiti Modulo 03
+
+Il progetto è stato aggiornato per soddisfare pienamente i requisiti del modulo `03_Sviluppo_Web_e_Database`.
+
+### Autenticazione e Sicurezza
+- **Sistema di Login/Registrazione**: Accesso protetto alla dashboard Inbox.
+- **Password Hashing**: Le password sono gestite in modo sicuro tramite `werkzeug.security` (hashing PBKDF2), garantendo che nessuna credenziale sia salvata in chiaro nel database.
+- **Gestione Sessioni**: Utilizzo di sessioni Flask per proteggere le rotte.
+
+###  Database Relazionale
+- **Schema**: Implementazione di tabelle multiple (`user`, `contacts`, `projects`, `categories`).
+- **Relazioni**: Utilizzo di chiavi esterne (Foreign Keys) per gestire le relazioni tra categorie e progetti.
+- **Persistenza**: Database SQLite ottimizzato per la velocità e la portabilità.
+
+### Dashboard Inbox
+- **Ricerca Intelligente**: Filtra i messaggi per nome, email o contenuto testuale.
+- **Sistema Preferiti**: Possibilità di contrassegnare i messaggi importanti con una stella (★) tramite interazioni asincrone.
+- **Filtri**: Visualizzazione rapida di tutti i messaggi o solo dei preferiti.
+
+### Documentazione Tecnica
+Tutta la progettazione concettuale è disponibile nella cartella `docs/`:
+- **Diagramma ER**: Schema concettuale del database.
+- **UML Class Diagram**: Architettura delle classi e dei repository.
+- **Casi d'Uso**: Descrizione delle interazioni tra utenti e sistema.
+
+---
+
+### 🛠️ Come avviare il progetto (Locale)
+1. Installa le dipendenze: `pip install -r requirements.txt`
+2. Inizializza il DB: `python setup_db.py`
+3. Avvia l'app: `python run.py`
+4. Accedi alla Inbox: Vai su `/api/contacts` (ti verrà chiesto di registrarti/accedere).
 
