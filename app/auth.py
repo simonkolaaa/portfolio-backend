@@ -10,10 +10,11 @@ def login_required(view):
     @functools.wraps(view)
     def wrapped_view(**kwargs):
         if g.user is None:
-            # Per le richieste API restituiamo JSON, per il browser redirect
-            if request.path.startswith('/api/'):
-                return jsonify({"error": "Autenticazione richiesta"}), 401
-            return redirect(url_for('auth.login'))
+            # Se la richiesta accetta HTML (richiesta da browser), facciamo redirect.
+            # Altrimenti (richiesta API pura), restituiamo 401 Unauthorized.
+            if 'text/html' in request.headers.get('Accept', ''):
+                return redirect(url_for('auth.login'))
+            return jsonify({"error": "Autenticazione richiesta"}), 401
         return view(**kwargs)
     return wrapped_view
 
