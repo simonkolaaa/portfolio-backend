@@ -23,6 +23,12 @@ def create_app():
     from . import db
     db.init_app(app)
 
+    # Chiave segreta per le sessioni (in produzione andrebbe in .env)
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev_key_portfolio_123')
+
+    from . import auth
+    app.register_blueprint(auth.bp)
+
     from . import api
     app.register_blueprint(api.bp)
 

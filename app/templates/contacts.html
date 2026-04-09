@@ -102,6 +102,56 @@
         }
 
         /* Jinja2 Managed Table Content */
+        .search-container {
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .search-input {
+            flex-grow: 1;
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            padding: 0.8rem 1.2rem;
+            color: var(--text-main);
+            border-radius: 4px;
+            font-family: inherit;
+        }
+
+        .filter-btn {
+            background: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--text-main);
+            padding: 0.6rem 1.2rem;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+        }
+
+        .filter-btn.active {
+            background: var(--text-main);
+            color: var(--bg-color);
+        }
+
+        .star-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-dim);
+            font-size: 1.2rem;
+            transition: color 0.2s;
+            padding: 0;
+            margin-right: 0.5rem;
+        }
+
+        .star-btn.active {
+            color: #ffd700; /* Gold */
+        }
+
         .table-wrapper {
             width: 100%;
             overflow-x: auto;
@@ -211,8 +261,15 @@
             <div class="controls">
                 <span class="badge stats">{{ contacts|length }} Ricevuti</span>
                 <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">Light Mode</button>
+                <a href="{{ url_for('auth.logout') }}" class="theme-toggle" style="text-decoration: none; display: inline-block;">Logout</a>
             </div>
         </header>
+
+        <div class="search-container">
+            <input type="text" id="searchInput" class="search-input" placeholder="Cerca mittente, email o messaggio..." value="{{ request.args.get('search', '') }}">
+            <button class="filter-btn {% if request.args.get('filter') == 'favorites' %}active{% endif %}" onclick="toggleFilter()">Favoriti</button>
+            <button class="filter-btn" onclick="applySearch()">Cerca</button>
+        </div>
 
         <div class="table-wrapper">
             {% if contacts %}
@@ -229,7 +286,12 @@
                             <tr>
                                 <td>
                                     <div class="user-info">
-                                        <span class="name">{{ contact['name'] }}</span>
+                                        <div style="display: flex; align-items: center;">
+                                            <button class="star-btn {% if contact['is_favorite'] %}active{% endif %}" onclick="toggleFavorite(this, {{ contact['id'] }})">
+                                                ★
+                                            </button>
+                                            <span class="name">{{ contact['name'] }}</span>
+                                        </div>
                                         <a href="mailto:{{ contact['email'] }}" class="email">{{ contact['email'] }}</a>
                                     </div>
                                 </td>
@@ -271,6 +333,48 @@
                 btn.textContent = 'Light Mode';
             }
         }
+
+        function applySearch() {
+            const query = document.getElementById('searchInput').value;
+            const url = new URL(window.location.href);
+            if (query) {
+                url.searchParams.set('search', query);
+            } else {
+                url.searchParams.delete('search');
+            }
+            window.location.href = url.href;
+        }
+
+        function toggleFilter() {
+            const url = new URL(window.location.href);
+            const isFav = url.searchParams.get('filter') === 'favorites';
+            if (isFav) {
+                url.searchParams.delete('filter');
+            } else {
+                url.searchParams.set('filter', 'favorites');
+            }
+            window.location.href = url.href;
+        }
+
+        async function toggleFavorite(btn, contactId) {
+            try {
+                const response = await fetch(`/api/contacts/${contactId}/toggle-favorite`, {
+                    method: 'POST'
+                });
+                if (response.ok) {
+                    btn.classList.toggle('active');
+                }
+            } catch (err) {
+                console.error("Errore nel toggle preferito:", err);
+            }
+        }
+
+        // Search on Enter
+        document.getElementById('searchInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                applySearch();
+            }
+        });
     </script>
 </body>
 </html>

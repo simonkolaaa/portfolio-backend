@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify, render_template
 from app.repositories import contact_repository
+from app.auth import login_required
 import logging
 
 # Configurazione log
@@ -36,12 +37,27 @@ def add_contact():
         return jsonify({"error": f"Errore database: {str(e)}"}), 500
 
 @bp.route('/contacts', methods=['GET'])
+@login_required
 def get_contacts():
-    """Ritorna la Dashboard HTML con tutti i messaggi ricevuti."""
+    """Ritorna la Dashboard HTML con tutti i messaggi ricevuti (filtri supportati)."""
+    search_query = request.args.get('search')
+    favorite_filter = request.args.get('filter') == 'favorites'
+    
     try:
-        contacts = contact_repository.get_all_contacts()
-        # Invece del JSON, renderizziamo il template HTML premium
+        contacts = contact_repository.get_all_contacts(
+            search_query=search_query, 
+            favorite_only=favorite_filter
+        )
         return render_template('contacts.html', contacts=contacts)
     except Exception as e:
-        # In caso di errore estremo, restituiamo un JSON per debug
+        return jsonify({"error": str(e)}), 500
+
+@bp.route('/contacts/<int:contact_id>/toggle-favorite', methods=['POST'])
+@login_required
+def toggle_favorite(contact_id):
+    """Sposta o rimuove un contatto dai preferiti."""
+    try:
+        contact_repository.toggle_favorite(contact_id)
+        return jsonify({"success": "Stato preferito aggiornato"}), 200
+    except Exception as e:
         return jsonify({"error": str(e)}), 500
