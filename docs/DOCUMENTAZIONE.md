@@ -4,10 +4,18 @@ Questa documentazione descrive l'architettura, il database e i casi d'uso del pr
 
 ## 1. Diagramma ER (Schema Database)
 
-Il database SQLite è composto da tre tabelle principali per gestire i messaggi ricevuti e i contenuti del portfolio.
+Il database SQLite è composto da quattro tabelle principali con relazioni per gestire i messaggi, i contenuti e l'accesso sicuro.
 
 ```mermaid
 erDiagram
+    CATEGORIES ||--o{ PROJECTS : "contiene"
+    USER ||--o{ CONTACTS : "gestisce (opzionale)"
+    
+    USER {
+        int id PK
+        string username
+        string password_hash
+    }
     CONTACTS {
         int id PK
         string name
@@ -27,26 +35,33 @@ erDiagram
         int id PK
         string name
     }
-
-    CATEGORIES ||--o{ PROJECTS : "contiene"
 ```
 
 ## 2. Diagramma UML delle Classi
 
-L'applicazione segue il **Repository Pattern** per separare la logica di accesso ai dati dal controller (Blueprint API).
+L'applicazione segue il **Repository Pattern**. Tutte le rotte sono protette tramite il blueprint di autenticazione.
 
 ```mermaid
 classDiagram
+    class UserRepository {
+        +create_user(username, hash)
+        +get_user_by_id(id)
+        +get_user_by_username(user)
+    }
     class ContactRepository {
         +create_contact(name, email, message)
-        +get_all_contacts()
+        +get_all_contacts(search, favorite)
         +toggle_favorite(id)
-        +search_contacts(query)
     }
     class ProjectRepository {
-        +get_all()
-        +get_by_category(category_id)
-        +create(data)
+        +get_all_projects()
+        +create_project(data)
+    }
+    class Auth_Blueprint {
+        +login()
+        +register()
+        +logout()
+        +login_required(view)
     }
     class API_Blueprint {
         +add_contact()
@@ -55,31 +70,31 @@ classDiagram
     }
     
     API_Blueprint ..> ContactRepository : usa
-    API_Blueprint ..> ProjectRepository : usa
+    API_Blueprint ..> Auth_Blueprint : richiede
+    Auth_Blueprint ..> UserRepository : usa
 ```
 
 ## 3. Casi d'Uso
 
-Il sistema prevede due attori principali: il Visitatore (utente pubblico) e l'Amministratore (proprietario del portfolio).
+Il sistema prevede due attori principali: il Visitatore e l'Amministratore del portfolio.
 
 ```mermaid
-useCaseDiagram
-    actor "Visitatore" as V
-    actor "Amministratore" as A
+graph LR
+    subgraph "Portfolio System"
+        UC1(Invia Messaggio)
+        UC2(Visualizza Progetti)
+        UC3(Gestione Inbox)
+        UC4(Cerca Messaggi)
+        UC5(Segna come Preferito)
+        UC6(Login/Logout)
+    end
 
-    package "Portfolio System" {
-        usecase "Invia Messaggio" as UC1
-        usecase "Visualizza Progetti" as UC2
-        usecase "Gestione Inbox" as UC3
-        usecase "Cerca Messaggi" as UC4
-        usecase "Segna come Preferito" as UC5
-    }
-
-    V --> UC1
+    V[Visitatore] --> UC1
     V --> UC2
-    A --> UC3
+    A[Amministratore] --> UC3
     A --> UC4
     A --> UC5
+    A --> UC6
 ```
 
 > [!NOTE]
