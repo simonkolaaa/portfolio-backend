@@ -2,46 +2,13 @@
 
 Il backend del portfolio personale di Simon Kola, sviluppato in Python/Flask con database SQLite.
 
-## 🚀 Nuove Funzionalità e Requisiti Modulo 03
 
-Il progetto è stato aggiornato per soddisfare pienamente i requisiti del modulo `03_Sviluppo_Web_e_Database`.
-
-### 🔐 Autenticazione e Sicurezza
-- **Sistema di Login/Registrazione**: Accesso protetto alla dashboard Inbox.
-- **Password Hashing**: Le password sono gestite in modo sicuro tramite `werkzeug.security` (hashing PBKDF2), garantendo che nessuna credenziale sia salvata in chiaro nel database.
-- **Gestione Sessioni**: Utilizzo di sessioni Flask per proteggere le rotte amministrative.
-
-### 📁 Database Relazionale
-- **Schema Avanzato**: Implementazione di tabelle multiple (`user`, `contacts`, `projects`, `categories`).
-- **Relazioni**: Utilizzo di chiavi esterne (Foreign Keys) per gestire le relazioni tra categorie e progetti.
-- **Persistenza**: Database SQLite ottimizzato per la velocità e la portabilità.
-
-### 📥 Dashboard Inbox Potenziata
-- **Ricerca Intelligente**: Filtra i messaggi per nome, email o contenuto testuale.
-- **Sistema Preferiti**: Possibilità di contrassegnare i messaggi importanti con una stella (★) tramite interazioni asincrone (AJAX/Fetch).
-- **Filtri Avanzati**: Visualizzazione rapida di tutti i messaggi o solo dei preferiti.
-
-### 📊 Documentazione Tecnica
-Tutta la progettazione concettuale è disponibile nella cartella `docs/`:
-- **Diagramma ER**: Schema concettuale del database.
-- **UML Class Diagram**: Architettura delle classi e dei repository.
-- **Casi d'Uso**: Descrizione delle interazioni tra utenti e sistema.
-
----
-
-### 🛠️ Come avviare il progetto (Locale)
-1. Installa le dipendenze: `pip install -r requirements.txt`
-2. Inizializza il DB: `python setup_db.py`
-3. Avvia l'app: `python run.py`
-4. Accedi alla Inbox: Vai su `/api/contacts` (ti verrà chiesto di registrarti/accedere).
-
-## 🛠️ Architettura Originale
+## Architettura
 
 Ho creato il mio **Portfolio personale** per avere un sito vetrina dove poter raccontare chi sono, mostrare le mie competenze informatiche e i miei progetti scolastici. Essendo un progetto in sviluppo, continuerò ad aggiornarlo man mano che acquisisco nuove competenze.
 
 Su consiglio del mio **professore di informatica**, ho deciso di integrare un **Backend** al portfolio. Volevo che il form di contatto creato nella sezione *Contatti* funzionasse realmente, collegandosi a un server privato.
 
-### Architettura
 Invece di partire da zero, ho deciso di prendere come struttura il **"Blog Scolastico"** che avevamo sviluppato in classe con Flask.
 L'ho modificata e riadattata per servire esclusivamente come **API** (Backend) in grado di comunicare col frontend React.
 
