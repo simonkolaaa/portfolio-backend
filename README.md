@@ -12,9 +12,6 @@ Su consiglio del mio **professore di informatica**, ho deciso di integrare un **
 Invece di partire da zero, ho deciso di prendere come struttura il **"Blog Scolastico"** che avevamo sviluppato in classe con Flask.
 L'ho modificata e riadattata per servire esclusivamente come **API** (Backend) in grado di comunicare col frontend React.
 
-### Dashboard Messaggi nuova
-Invece di vedere i messaggi nel formato grezzo JSON, ora la rotta `/api/contacts` restituisce una **Dashboard HTML professionale**.
-Sempre su richiesta del professore, ho usato **Jinja2** per creare un'interfaccia **Monochrome (Bianco e Nero)** , con un pulsante dinamico per passare dalla modalità Chiara alla modalità Scura.
 
 ### Cosa ho usato e Perché
 
@@ -83,7 +80,7 @@ Tutta la progettazione concettuale è disponibile nella cartella `docs/`:
 
 ---
 
-### 🛠️ Come avviare il progetto (Locale)
+### Come avviare il progetto (Locale)
 1. Installa le dipendenze: `pip install -r requirements.txt`
 2. Inizializza il DB: `python setup_db.py`
 3. Avvia l'app: `python run.py`
