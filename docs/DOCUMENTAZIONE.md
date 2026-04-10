@@ -1,6 +1,6 @@
 # Documentazione Tecnica - Portfolio Backend
 
-Questa documentazione descrive l'architettura, il database e i casi d'uso del progetto Portfolio Backend, sviluppato per il modulo `03_Sviluppo_Web_e_Database`.
+Questa documentazione descrive l'architettura, il database e i casi d'uso del progetto Portfolio Backend, sviluppato con il modulo `03_Sviluppo_Web_e_Database`.
 
 ## 1. Diagramma ER (Schema Database)
 
@@ -97,5 +97,4 @@ graph LR
     A --> UC6
 ```
 
-> [!NOTE]
-> Per semplicità di presentazione in un contesto portfolio, l'accesso amministrativo alla Inbox è attualmente aperto, ma strutturato per essere protetto da un sistema di autenticazione futuro.
+
