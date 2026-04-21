@@ -92,7 +92,7 @@ graph LR
 
     V[Visitatore] --> UC1
     V --> UC2
-    A[Amministratore (utente registrato)] --> UC3
+    A[Amministratore(utente registrato)] --> UC3
     A --> UC4
     A --> UC5
     A --> UC6
