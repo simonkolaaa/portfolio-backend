@@ -2,6 +2,8 @@ from flask import Blueprint, request, jsonify, render_template
 from app.repositories import contact_repository
 from app.auth import login_required
 import logging
+import time
+from collections import defaultdict
 
 # Configurazione log
 logging.basicConfig(level=logging.INFO)
@@ -10,7 +12,24 @@ logger = logging.getLogger(__name__)
 # Blueprint per le rotte API
 bp = Blueprint('api', __name__, url_prefix='/api')
 
-# --- ROTTE CONTATTI (Sistema SQLite Blindato) ---
+# --- RATE LIMITER IN MEMORIA (anti-spam Arus) ---
+# Struttura: { "ip": [timestamp1, timestamp2, ...] }
+_rate_store = defaultdict(list)
+RATE_LIMIT = 10       # max richieste
+RATE_WINDOW = 60      # in secondi
+
+def _is_rate_limited(ip: str) -> bool:
+    """Restituisce True se l'IP ha superato il limite di richieste."""
+    now = time.time()
+    # Mantieni solo i timestamp nell'ultima finestra
+    _rate_store[ip] = [t for t in _rate_store[ip] if now - t < RATE_WINDOW]
+    if len(_rate_store[ip]) >= RATE_LIMIT:
+        return True
+    _rate_store[ip].append(now)
+    return False
+
+
+# --- ROTTE CONTATTI ---
 
 @bp.route('/contact', methods=['POST'])
 def add_contact():
@@ -61,3 +80,45 @@ def toggle_favorite(contact_id):
         return jsonify({"success": "Stato preferito aggiornato"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+# --- ROTTA ARUS AI ---
+
+@bp.route('/arus', methods=['POST'])
+def arus_chat():
+    """
+    Endpoint chat Arus.
+    Riceve { "message": "..." } e restituisce { "reply": "..." }.
+    Protetto da rate limiting per IP.
+    """
+    # Rate limiting
+    ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+    if ip:
+        ip = ip.split(',')[0].strip()  # prende il primo IP in caso di proxy
+    
+    if _is_rate_limited(ip):
+        logger.warning(f"Rate limit raggiunto per IP: {ip}")
+        return jsonify({"error": "Troppe richieste. Aspetta un momento prima di scrivere ancora."}), 429
+
+    # Validazione input
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Richiesta non valida."}), 400
+
+    user_message = data.get('message', '').strip()
+
+    if not user_message:
+        return jsonify({"error": "Il messaggio non può essere vuoto."}), 400
+
+    if len(user_message) > 500:
+        return jsonify({"error": "Messaggio troppo lungo (max 500 caratteri)."}), 400
+
+    # Chiama Arus
+    try:
+        from arus_brain import ask_arus
+        logger.info(f"Richiesta Arus da {ip}: {user_message[:60]}...")
+        reply = ask_arus(user_message)
+        return jsonify({"reply": reply}), 200
+    except Exception as e:
+        logger.error(f"Errore Arus: {str(e)}")
+        return jsonify({"error": "Arus non è disponibile al momento."}), 500
