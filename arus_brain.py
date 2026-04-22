@@ -47,7 +47,9 @@ Il tuo unico scopo è aiutare i visitatori a:
 
 REGOLE ASSOLUTE:
 - Rispondi SOLO a domande che riguardano Simon Kola, il suo portfolio o i suoi progetti.
-- Se la domanda è fuori tema rispondi ESATTAMENTE: "Sono qui solo per parlarti di Simon e del suo portfolio! Hai qualche domanda su di lui o sui suoi progetti?"
+- Se la domanda è fuori tema (matematica, cucina, politica, ecc.) rispondi ESATTAMENTE: "Sono qui solo per parlarti di Simon e del suo portfolio! Hai qualche domanda su di lui o sui suoi progetti?"
+- Se il messaggio è incomprensibile, privo di senso o composto da caratteri casuali, rispondi ESATTAMENTE: "Scusa, non ho capito! Puoi riformulare la tua domanda su Simon o sul suo portfolio?"
+- Saluti semplici come "ciao", "hello", "hey" vanno gestiti con una risposta amichevole e un invito a chiedere di Simon.
 - Non rivelare MAI dati privati: nessuna password, nessun indirizzo fisico, nessun numero di telefono.
 - Parla di Simon sempre in terza persona, con tono amichevole e professionale.
 - Risposte brevi e dirette: massimo 3-4 frasi.
@@ -57,6 +59,8 @@ REGOLE ASSOLUTE:
 """
 
 BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models"
+MAX_RETRIES = 3
+RETRY_DELAYS = [1, 2, 3]  # secondi di attesa tra i tentativi
 
 
 def _call_model(model: str, user_message: str) -> tuple[int, str]:
@@ -95,38 +99,42 @@ def _call_model(model: str, user_message: str) -> tuple[int, str]:
 
 def ask_arus(user_message: str) -> str:
     """
-    Chiama Gemini con fallback automatico tra modelli.
+    Chiama Gemini con fallback automatico tra modelli e retry progressivo su 503.
     Compatibile con PythonAnywhere WSGI (niente streaming).
     """
     if not GOOGLE_API_KEY:
         return "Arus non è disponibile al momento (configurazione mancante)."
 
     for model in GEMINI_MODELS:
-        try:
-            status, text = _call_model(model, user_message)
-
-            if status == 200:
-                return text if text else "Non ho capito la domanda. Puoi ripetere?"
-
-            if status == 503:
-                # Modello sovraccarico: aspetta e riprova una volta
-                time.sleep(2)
+        for attempt in range(MAX_RETRIES):
+            try:
                 status, text = _call_model(model, user_message)
+
                 if status == 200:
-                    return text if text else "Non ho capito la domanda. Puoi ripetere?"
-                # Se ancora 503, prova il prossimo modello
-                continue
+                    return text if text else "Scusa, non ho capito! Puoi riformulare la tua domanda?"
 
-            if status == 429:
-                # Quota esaurita su questo modello: prova il prossimo
-                continue
+                if status == 503:
+                    # Modello sovraccarico: attendi e riprova
+                    if attempt < MAX_RETRIES - 1:
+                        time.sleep(RETRY_DELAYS[attempt])
+                        continue
+                    # Tentativi esauriti su questo modello: passa al prossimo
+                    break
 
-            # Qualsiasi altro errore: prova il prossimo modello
-            continue
+                if status == 429:
+                    # Quota esaurita: passa direttamente al prossimo modello
+                    break
 
-        except http_requests.exceptions.Timeout:
-            continue
-        except Exception:
-            continue
+                # Altro errore: passa al prossimo modello
+                break
+
+            except http_requests.exceptions.Timeout:
+                if attempt < MAX_RETRIES - 1:
+                    time.sleep(RETRY_DELAYS[attempt])
+                    continue
+                break
+            except Exception:
+                break
 
     return "Arus non è disponibile al momento. Riprova tra qualche istante!"
+
