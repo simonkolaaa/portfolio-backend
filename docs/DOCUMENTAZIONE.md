@@ -70,6 +70,7 @@ erDiagram
         string message
         boolean is_favorite
         datetime created_at
+        int user_id FK
     }
     PROJECTS {
         int id PK
