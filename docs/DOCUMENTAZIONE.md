@@ -213,7 +213,7 @@ graph LR
 
     subgraph PUB["Azioni pubbliche"]
         UC1(Invia messaggio tramite form)
-        UC2(Interagisci con Arus (AI Assistant))
+        UC2("Interagisci con Arus (AI Assistant)")
     end
 
     subgraph AUTH["Autenticazione"]
@@ -254,7 +254,7 @@ actor Amministratore
 Visitatore <|-- Amministratore
 
 Visitatore --> (Invia messaggio tramite form)
-Visitatore --> (Interagisci con Arus (AI Assistant))
+Visitatore --> ("Interagisci con Arus (AI Assistant)")
 
 Amministratore --> (Autenticazione)
 Amministratore --> (Visualizza inbox)
@@ -267,7 +267,7 @@ Amministratore --> (Segna come preferito)
 
 (Filtra messaggi)      .> (Visualizza inbox)            : <<extend>>
 (Segna come preferito) .> (Visualizza inbox)            : <<extend>>
-(Interagisci con Arus (AI Assistant)) .> (Invia messaggio tramite form) : <<extend>>
+("Interagisci con Arus (AI Assistant)") .> (Invia messaggio tramite form) : <<extend>>
 @enduml
 ```
 
