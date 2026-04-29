@@ -24,11 +24,10 @@ Il backend è pensato per essere consumato da un frontend separato (es. il portf
 
 ### Funzionalità principali
 
-1. Invio di un messaggio di contatto con nome, email e testo (`POST /api/contact`).
+1. Invio di un messaggio tramite form con nome, email e testo (`POST /api/contact`).
 2. Visualizzazione della lista dei messaggi ricevuti (filtro per testo e preferiti) — richiede login (`GET /api/contacts`).
 3. Possibilità di marcare/demarcare un contatto come preferito (`POST /api/contacts/<id>/toggle-favorite`).
-4. Registrazione e login dell'amministratore (`/auth/register`, `/auth/login`).
-5. Logout e invalidazione della sessione (`/auth/logout`).
+4. Autenticazione dell'amministratore (login/logout).
 6. Interazione con l'assistente AI Arus tramite endpoint dedicato.
 
 ### User stories
@@ -37,7 +36,7 @@ Il backend è pensato per essere consumato da un frontend separato (es. il portf
 - Come **amministratore**, voglio accedere a una dashboard protetta per leggere i messaggi ricevuti.
 - Come **amministratore**, voglio filtrare i messaggi per parola chiave o visualizzare solo i preferiti.
 - Come **amministratore**, voglio segnare un messaggio come preferito per trovarlo rapidamente in seguito.
-- Come **visitatore**, voglio interagire con l'assistente Arus per sapere chi è Simon e cosa sa fare.
+- Come **visitatore**, voglio interagire con l'assistente Arus (AI Assistant) per sapere chi è Simon e cosa sa fare.
 
 ---
 
@@ -54,15 +53,10 @@ Il backend è pensato per essere consumato da un frontend separato (es. il portf
 
 ## 5. Schema ER (Entità e Relazioni)
 
-Il database SQLite è composto da quattro tabelle. La tabella `contacts` raccoglie i messaggi inviati dai visitatori. La tabella `user` gestisce l'accesso amministrativo. Le tabelle `projects` e `categories` organizzano i contenuti del portfolio esposti via API al frontend.
+Il database è composto da tre entità del dominio. `contacts` raccoglie i messaggi dei visitatori, `projects` contiene i progetti del portfolio. `contact_project` è un'**entità associativa** che le collega: un visitatore può citare uno o più progetti nel suo messaggio, specificando per ciascuno il proprio tipo di interesse (es. collaborazione, bug report, ispirazione).
 
 ```mermaid
 erDiagram
-    USER {
-        int id PK
-        string username
-        string password
-    }
     CONTACTS {
         int id PK
         string name
@@ -70,25 +64,25 @@ erDiagram
         string message
         boolean is_favorite
         datetime created_at
-        int user_id FK
     }
     PROJECTS {
         int id PK
         string title
         string description
         string url
-        int category_id FK
+        string tags
     }
-    CATEGORIES {
-        int id PK
-        string name
+    CONTACT_PROJECT {
+        int contact_id FK
+        int project_id FK
+        string tipo_interesse
     }
 
-    USER ||--o{ CONTACTS : "gestisce (dashboard)"
-    CATEGORIES ||--o{ PROJECTS : "classifica"
+    CONTACTS ||--o{ CONTACT_PROJECT : "si riferisce a"
+    PROJECTS ||--o{ CONTACT_PROJECT : "citato in"
 ```
 
-> `USER` non ha una relazione diretta con `CONTACTS` a livello di chiave esterna nel DB: la relazione è logica — l'utente amministratore gestisce i contatti tramite la dashboard protetta.
+> `CONTACT_PROJECT` è un'entità associativa con attributo proprio (`tipo_interesse`): descrive il motivo specifico per cui un visitatore cita quel progetto nel suo messaggio. Questo la distingue da una semplice tabella ponte e la rende un'entità del dominio a tutti gli effetti.
 
 ---
 
@@ -98,11 +92,6 @@ L'applicazione segue il **Repository Pattern**: la logica di accesso al database
 
 ```mermaid
 classDiagram
-    class UserRepository {
-        +create_user(username, password_hash) bool
-        +get_user_by_id(id) dict
-        +get_user_by_username(username) dict
-    }
     class ContactRepository {
         +create_contact(name, email, message) void
         +get_all_contacts(search, favorite_only) list
@@ -111,6 +100,16 @@ classDiagram
     class ProjectRepository {
         +get_all_projects() list
         +create_project(data) void
+    }
+    class ContactProjectRepository {
+        +link_contact_to_project(contact_id, project_id, tipo_interesse) void
+        +get_projects_by_contact(contact_id) list
+        +get_contacts_by_project(project_id) list
+    }
+    class UserRepository {
+        +create_user(username, password_hash) bool
+        +get_user_by_id(id) dict
+        +get_user_by_username(username) dict
     }
 
     class Auth_Blueprint {
@@ -126,15 +125,19 @@ classDiagram
         +add_contact() Response
         +get_contacts() Response
         +toggle_favorite(id) Response
+        +arus_chat() Response
     }
     class ArusBrain {
         -SIMON_CONTEXT : string
         -ARUS_SYSTEM_PROMPT : string
         -GEMINI_MODEL : string
-        +stream_arus(user_message) Generator
+        +ask_arus(user_message) string
     }
 
+    ContactRepository "1" -- "*" ContactProjectRepository : genera
+    ProjectRepository "1" -- "*" ContactProjectRepository : coinvolge
     API_Blueprint ..> ContactRepository : usa
+    API_Blueprint ..> ArusBrain : usa
     API_Blueprint ..> Auth_Blueprint : richiede (login_required)
     Auth_Blueprint ..> UserRepository : usa
     ArusBrain ..> GeminiAPI : chiama (HTTP REST)
@@ -153,7 +156,7 @@ classDiagram
 | `User` | Account amministratore unico che può accedere alla dashboard protetta. |
 | `Project` | Voce del portfolio (titolo, descrizione, link, categoria) esposta tramite API al frontend. |
 | `Category` | Raggruppamento tematico dei progetti (es. `Web`, `AI`, `Backend`). |
-| `Arus` | Assistente AI integrato nel portfolio. Chiama Google Gemini via HTTP REST e risponde in streaming. |
+| `Arus` | Assistente AI integrato nel portfolio. Chiama Google Gemini via HTTP REST e fornisce risposte testuali. |
 | `Sessione` | Meccanismo Flask basato su cookie firmati per mantenere l'utente autenticato tra le richieste. |
 | `CORS` | Cross-Origin Resource Sharing: configurazione che permette al frontend (GitHub Pages) di chiamare il backend. |
 | `.env` | File locale (non versionato) contenente variabili sensibili come `GOOGLE_API_KEY` e `SECRET_KEY`. |
@@ -209,13 +212,12 @@ graph LR
     A([Amministratore])
 
     subgraph PUB["Azioni pubbliche"]
-        UC1(Invia messaggio di contatto)
-        UC2(Interagisci con Arus)
+        UC1(Invia messaggio tramite form)
+        UC2(Interagisci con Arus (AI Assistant))
     end
 
     subgraph AUTH["Autenticazione"]
-        UC6(Login)
-        UC7(Logout)
+        UC6(Autenticazione)
         UCAUTH{Verifica autenticazione}
     end
 
@@ -229,7 +231,6 @@ graph LR
     V --> UC2
     A --->|può fare| V
     A --> UC6
-    A --> UC7
     A --> UC3
     A --> UC4
     A --> UC5
@@ -252,11 +253,10 @@ actor Visitatore
 actor Amministratore
 Visitatore <|-- Amministratore
 
-Visitatore --> (Invia messaggio di contatto)
-Visitatore --> (Interagisci con Arus)
+Visitatore --> (Invia messaggio tramite form)
+Visitatore --> (Interagisci con Arus (AI Assistant))
 
-Amministratore --> (Login)
-Amministratore --> (Logout)
+Amministratore --> (Autenticazione)
 Amministratore --> (Visualizza inbox)
 Amministratore --> (Filtra messaggi)
 Amministratore --> (Segna come preferito)
@@ -267,7 +267,7 @@ Amministratore --> (Segna come preferito)
 
 (Filtra messaggi)      .> (Visualizza inbox)            : <<extend>>
 (Segna come preferito) .> (Visualizza inbox)            : <<extend>>
-(Interagisci con Arus) .> (Invia messaggio di contatto) : <<extend>>
+(Interagisci con Arus (AI Assistant)) .> (Invia messaggio tramite form) : <<extend>>
 @enduml
 ```
 
@@ -283,15 +283,13 @@ Tutte le azioni della dashboard richiedono sempre il login: se la sessione non �
 
 **`<<extend>>`** — comportamento opzionale o condizionale:
 
-- `Filtra messaggi` `<<extend>>` `Visualizza inbox`: filtrare per parola chiave o preferiti è opzionale rispetto alla semplice lettura dell'inbox.
-- `Segna come preferito` `<<extend>>` `Visualizza inbox`: l'azione si attiva durante la consultazione dell'inbox, non è obbligatoria.
-- `Interagisci con Arus` `<<extend>>` `Invia messaggio di contatto`: il visitatore può usare l'assistente AI invece (o in alternativa) al form di contatto.
+- `Filtra messaggi` `«extend»` `Visualizza inbox`: filtrare per parola chiave o preferiti è opzionale rispetto alla semplice lettura dell'inbox.
+- `Segna come preferito` `«extend»` `Visualizza inbox`: l'azione si attiva durante la consultazione dell'inbox, non è obbligatoria.
+- `Interagisci con Arus (AI Assistant)` `«extend»` `Invia messaggio tramite form`: il visitatore può usare l'assistente AI invece (o in alternativa) al form di contatto.
 
 ---
 
 > [!NOTE]
-> Il frontend del portfolio (HTML/CSS/JS statico) è separato da questo backend ed è distribuito su GitHub Pages all'indirizzo `simonkolaaa.github.io`. Il backend risponde alle sue richieste tramite l'API REST ed è hostato su PythonAnywhere.
-
 
 
 
