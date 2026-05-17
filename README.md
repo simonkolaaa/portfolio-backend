@@ -17,10 +17,9 @@ L'ho modificata e riadattata per servire esclusivamente come **API** (Backend) i
 
 - **Backend (Python + Flask):** Ho usato Flask, mantenendo lo stile ad *Application Factory* e il *Repository Pattern* per avere codice pulito.
 - **Rendering (Jinja2):** Usato per generare la dashboard dei messaggi in modo dinamico direttamente dal server.
-- **Sicurezza (Flask-CORS):** Fondamentale per far comunicare il frontend React con le API Flask senza blocchi di sicurezza del browser.
+- **Sicurezza (Flask-CORS):** Fondamentale per far comunicare il frontend React con le API Flask senza blocchi di sicurezza del browser. Ho configurato i CORS per accettare richieste esclusivamente dal dominio del portfolio ufficiale.
 - **Database (SQLite):** Per salvare i messaggi in ingresso. È leggero, affidabile e non richiede database esterni pesanti.
 - **Hosting Cloud (PythonAnywhere):** Scelto per la sua comodità e perché permette di mantenere persistente il file SQLite locale.
-- **Sicurezza (Flask-CORS):** Ho implementato i CORS per assicurarmi che solo le richieste in entrata dal mio sito Portfolio ufficiale venissero accettate dall'API protetta.
 
 ---
 
@@ -39,19 +38,33 @@ Ecco i brevi passaggi che ho seguito per configurare (o per sistemare/ricreare i
 - **Link dashboard messaggi:** [https://simonkolaaa.pythonanywhere.com/api/contacts](https://simonkolaaa.pythonanywhere.com/api/contacts)
 ---
 
-## Struttura del Progetto (in continuo sviluppo)
+## Struttura del Progetto
 
 ```text
-│   ├── __init__.py           <-- Factory (create_app) & CORS config
-│   ├── api.py                <-- Route d'ascolto (POST /api/contact)
-│   ├── db.py                 <-- Connessione al Database
-│   └── repositories/
-│       └── contact_repo.py   <-- Gestione queries SQLite pulite (INSERT)
+portfolio-backend/
+├── app/
+│   ├── __init__.py              <-- Application Factory (create_app) & CORS config
+│   ├── api.py                   <-- Blueprint API REST (POST /api/contact, GET /api/contacts, /api/arus)
+│   ├── auth.py                  <-- Blueprint autenticazione (login, registrazione, logout)
+│   ├── db.py                    <-- Connessione al Database SQLite
+│   ├── schema.sql               <-- Schema SQL per la creazione delle tabelle
+│   ├── repositories/
+│   │   ├── contact_repository.py   <-- Queries CRUD per i messaggi di contatto
+│   │   ├── project_repository.py   <-- Queries CRUD per i progetti del portfolio
+│   │   └── user_repository.py      <-- Queries per la gestione degli utenti
+│   └── templates/
+│       ├── auth.html            <-- Pagina di login e registrazione
+│       └── contacts.html        <-- Dashboard Inbox (visualizzazione messaggi)
+├── core/
+│   ├── brain.py                 <-- Logica di Arus: chiamata a Google Gemini REST API
+│   └── memory.py                <-- Contesto e prompt di sistema di Arus
+├── docs/
+│   └── DOCUMENTAZIONE.md        <-- Documentazione tecnica completa (ER, UML, Casi d'uso)
 ├── instance/
-│   └── portfolio.sqlite      <-- Il file in cui vengono salvati i messaggi
-├── schema.sql                <-- Schema base della tabella contacts
-├── run.py                    <-- Entry point per avviare il server (localhost:5000)
-└── setup_db.py               <-- Script per inizializzare il DB da zero
+│   └── portfolio.sqlite         <-- File del database (generato da setup_db.py)
+├── config.py                    <-- Configurazione centralizzata (SECRET_KEY, DB path, CORS origins)
+├── run.py                       <-- Entry point per avviare il server in locale (localhost:5000)
+└── setup_db.py                  <-- Script per inizializzare il DB da zero
 ```
 ## Nuove Funzionalità e Requisiti Modulo 03
 

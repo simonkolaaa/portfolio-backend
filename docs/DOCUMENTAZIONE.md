@@ -287,9 +287,4 @@ Tutte le azioni della dashboard richiedono sempre il login: se la sessione non �
 - `Segna come preferito` `«extend»` `Visualizza inbox`: l'azione si attiva durante la consultazione dell'inbox, non è obbligatoria.
 - `Interagisci con Arus (AI Assistant)` `«extend»` `Invia messaggio tramite form`: il visitatore può usare l'assistente AI invece (o in alternativa) al form di contatto.
 
----
-
-> [!NOTE]
-
-
 
