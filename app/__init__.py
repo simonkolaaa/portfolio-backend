@@ -39,14 +39,14 @@ def create_app():
         scope=["openid", "https://www.googleapis.com/auth/userinfo.email"],
         redirect_to="auth.oauth_google_callback",
     )
-    app.register_blueprint(google_bp, url_prefix="/auth/oauth/google")
+    app.register_blueprint(google_bp, url_prefix="/auth/oauth")
 
     github_bp = make_github_blueprint(
         client_id=config.GITHUB_CLIENT_ID,
         client_secret=config.GITHUB_CLIENT_SECRET,
         redirect_to="auth.oauth_github_callback",
     )
-    app.register_blueprint(github_bp, url_prefix="/auth/oauth/github")
+    app.register_blueprint(github_bp, url_prefix="/auth/oauth")
 
     from . import auth
     app.register_blueprint(auth.bp)
