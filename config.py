@@ -1,5 +1,9 @@
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Carica il file .env (funziona sia in locale che su PythonAnywhere via WSGI)
+load_dotenv()
 
 # --- CONFIGURAZIONE CORE (Jarvis-2) ---
 # Modalità di default: "online" (Gemini) o "offline" (Ollama)
