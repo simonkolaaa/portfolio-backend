@@ -1,6 +1,6 @@
 import functools
 import secrets
-from flask import Blueprint, flash, g, redirect, render_template, request, session, url_for, jsonify
+from flask import Blueprint, g, redirect, render_template, request, session, url_for, Response
 from werkzeug.security import check_password_hash, generate_password_hash
 from app.repositories import user_repository
 
@@ -81,7 +81,7 @@ def logout():
 
 # --- CALLBACK OAUTH ---
 
-def _oauth_login_or_create(username: str) -> redirect:
+def _oauth_login_or_create(username: str) -> Response:
     """Helper: cerca o crea l'utente OAuth nel DB e imposta la sessione."""
     user = user_repository.get_user_by_username(username)
     if user is None:
@@ -96,7 +96,7 @@ def _oauth_login_or_create(username: str) -> redirect:
 @bp.route('/oauth/google/callback')
 def oauth_google_callback():
     """Callback dopo il login Google. Legge email e crea/trova l'utente."""
-    from flask_dance.contrib.google import google
+    from flask_dance.contrib.google import google  # type: ignore[import-untyped]
     if not google.authorized:
         return redirect(url_for('google.login'))
     resp = google.get("/oauth2/v2/userinfo")
@@ -108,7 +108,7 @@ def oauth_google_callback():
 @bp.route('/oauth/github/callback')
 def oauth_github_callback():
     """Callback dopo il login GitHub. Legge username e crea/trova l'utente."""
-    from flask_dance.contrib.github import github
+    from flask_dance.contrib.github import github  # type: ignore[import-untyped]
     if not github.authorized:
         return redirect(url_for('github.login'))
     resp = github.get("/user")

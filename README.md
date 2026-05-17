@@ -56,9 +56,6 @@ portfolio-backend/
 │   └── templates/
 │       ├── auth.html            <-- Pagina di login e registrazione
 │       └── contacts.html        <-- Dashboard Inbox (visualizzazione messaggi)
-├── core/
-│   ├── brain.py                 <-- Logica di Arus: chiamata a Google Gemini REST API
-│   └── memory.py                <-- Contesto e prompt di sistema di Arus
 ├── docs/
 │   └── DOCUMENTAZIONE.md        <-- Documentazione tecnica completa (ER, UML, Casi d'uso)
 ├── instance/
