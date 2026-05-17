@@ -13,9 +13,10 @@ Il backend è pensato per essere consumato da un frontend separato (es. il portf
 ## 2. Obiettivi generali
 
 - Permettere a chiunque di inviare un messaggio di contatto tramite form (senza autenticazione).
-- Consentire all'amministratore di visualizzare, filtrare e gestire i messaggi ricevuti (Inbox).
-- Proteggere la dashboard con un sistema di login basato su sessioni Flask.
+- Consentire all'amministratore di visualizzare, filtrare, eliminare e gestire i messaggi ricevuti (Inbox).
+- Proteggere la dashboard con un sistema di login basato su sessioni Flask, con supporto OAuth 2.0 (Google e GitHub).
 - Esporre un endpoint AI (`/api/arus`) per interagire con l'assistente Arus via Gemini.
+- Proteggere il form contatti da spam tramite rate limiting per IP.
 - Organizzare il codice in modo pulito e scalabile tramite Blueprints e Repository Pattern.
 
 ---
@@ -27,8 +28,10 @@ Il backend è pensato per essere consumato da un frontend separato (es. il portf
 1. Invio di un messaggio tramite form con nome, email e testo (`POST /api/contact`).
 2. Visualizzazione della lista dei messaggi ricevuti (filtro per testo e preferiti) — richiede login (`GET /api/contacts`).
 3. Possibilità di marcare/demarcare un contatto come preferito (`POST /api/contacts/<id>/toggle-favorite`).
-4. Autenticazione dell'amministratore (login/logout).
+4. **Eliminazione di un messaggio** dalla dashboard (`DELETE /api/contacts/<id>`) — richiede login.
+5. Autenticazione dell'amministratore tramite login classico (username/password) o **OAuth 2.0** (Google, GitHub).
 6. Interazione con l'assistente AI Arus tramite endpoint dedicato.
+7. **Protezione anti-spam** sul form contatti: max 3 messaggi ogni 10 minuti per IP.
 
 ### User stories
 
@@ -36,6 +39,8 @@ Il backend è pensato per essere consumato da un frontend separato (es. il portf
 - Come **amministratore**, voglio accedere a una dashboard protetta per leggere i messaggi ricevuti.
 - Come **amministratore**, voglio filtrare i messaggi per parola chiave o visualizzare solo i preferiti.
 - Come **amministratore**, voglio segnare un messaggio come preferito per trovarlo rapidamente in seguito.
+- Come **amministratore**, voglio eliminare messaggi inappropriati (insulti, spam) dalla dashboard.
+- Come **amministratore**, voglio accedere con il mio account Google o GitHub senza dover ricordare una password separata.
 - Come **visitatore**, voglio interagire con l'assistente Arus (AI Assistant) per sapere chi è Simon e cosa sa fare.
 
 ---
@@ -47,7 +52,9 @@ Il backend è pensato per essere consumato da un frontend separato (es. il portf
 - Il codice deve essere organizzato con Flask Blueprints (`auth`, `api`) e Repository Pattern.
 - Il progetto deve essere eseguibile localmente con un ambiente virtuale Python (`venv`).
 - I dati (messaggi, utenti, progetti) devono essere persistenti su database SQLite.
-- Le variabili sensibili (chiavi API, secret key) devono essere gestite tramite file `.env`.
+- Le variabili sensibili (chiavi API, secret key, credenziali OAuth) devono essere gestite tramite file `.env`.
+- Il login deve supportare sia credenziali classiche che **OAuth 2.0** (Google, GitHub) tramite Flask-Dance.
+- Il form di contatto deve essere protetto da **rate limiting per IP** (max 3 richieste ogni 10 minuti).
 
 ---
 
@@ -96,6 +103,7 @@ classDiagram
         +create_contact(name, email, message) void
         +get_all_contacts(search, favorite_only) list
         +toggle_favorite(id) void
+        +delete_contact(id) void
     }
     class ProjectRepository {
         +get_all_projects() list
@@ -125,6 +133,7 @@ classDiagram
         +add_contact() Response
         +get_contacts() Response
         +toggle_favorite(id) Response
+        +delete_contact(id) Response
         +arus_chat() Response
     }
     class ArusBrain {
@@ -133,6 +142,11 @@ classDiagram
         -GEMINI_MODEL : string
         +ask_arus(user_message) string
     }
+    class OAuthProvider {
+        <<external>>
+        +google_login() redirect
+        +github_login() redirect
+    }
 
     ContactRepository "1" -- "*" ContactProjectRepository : genera
     ProjectRepository "1" -- "*" ContactProjectRepository : coinvolge
@@ -140,6 +154,7 @@ classDiagram
     API_Blueprint ..> ArusBrain : usa
     API_Blueprint ..> Auth_Blueprint : richiede (login_required)
     Auth_Blueprint ..> UserRepository : usa
+    Auth_Blueprint ..> OAuthProvider : delega (OAuth 2.0)
     ArusBrain ..> GeminiAPI : chiama (HTTP REST)
 ```
 
@@ -159,7 +174,10 @@ classDiagram
 | `Arus` | Assistente AI integrato nel portfolio. Chiama Google Gemini via HTTP REST e fornisce risposte testuali. |
 | `Sessione` | Meccanismo Flask basato su cookie firmati per mantenere l'utente autenticato tra le richieste. |
 | `CORS` | Cross-Origin Resource Sharing: configurazione che permette al frontend (GitHub Pages) di chiamare il backend. |
-| `.env` | File locale (non versionato) contenente variabili sensibili come `GOOGLE_API_KEY` e `SECRET_KEY`. |
+| `.env` | File locale (non versionato) contenente variabili sensibili come `GOOGLE_API_KEY`, `SECRET_KEY` e le credenziali OAuth. |
+| `OAuth 2.0` | Protocollo di autorizzazione che permette il login tramite provider esterni (Google, GitHub) senza gestire password. |
+| `Flask-Dance` | Libreria Flask che semplifica l'integrazione OAuth 2.0 con provider come Google e GitHub. |
+| `Rate Limiting` | Meccanismo che limita il numero di richieste per IP in un intervallo di tempo, usato per prevenire lo spam sul form contatti. |
 
 ---
 

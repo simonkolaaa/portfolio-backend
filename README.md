@@ -18,6 +18,7 @@ L'ho modificata e riadattata per servire esclusivamente come **API** (Backend) i
 - **Backend (Python + Flask):** Ho usato Flask, mantenendo lo stile ad *Application Factory* e il *Repository Pattern* per avere codice pulito.
 - **Rendering (Jinja2):** Usato per generare la dashboard dei messaggi in modo dinamico direttamente dal server.
 - **Sicurezza (Flask-CORS):** Fondamentale per far comunicare il frontend React con le API Flask senza blocchi di sicurezza del browser. Ho configurato i CORS per accettare richieste esclusivamente dal dominio del portfolio ufficiale.
+- **OAuth 2.0 (Flask-Dance):** Integrazione del login social tramite Google e GitHub, mantenendo anche il login classico con username e password come alternativa.
 - **Database (SQLite):** Per salvare i messaggi in ingresso. È leggero, affidabile e non richiede database esterni pesanti.
 - **Hosting Cloud (PythonAnywhere):** Scelto per la sua comodità e perché permette di mantenere persistente il file SQLite locale.
 
@@ -44,7 +45,7 @@ Ecco i brevi passaggi che ho seguito per configurare (o per sistemare/ricreare i
 portfolio-backend/
 ├── app/
 │   ├── __init__.py              <-- Application Factory (create_app) & CORS config
-│   ├── api.py                   <-- Blueprint API REST (POST /api/contact, GET /api/contacts, /api/arus)
+│   ├── api.py                   <-- Blueprint API REST (POST /api/contact, GET /api/contacts, DELETE /api/contacts/<id>, /api/arus)
 │   ├── auth.py                  <-- Blueprint autenticazione (login, registrazione, logout)
 │   ├── db.py                    <-- Connessione al Database SQLite
 │   ├── schema.sql               <-- Schema SQL per la creazione delle tabelle
@@ -71,7 +72,8 @@ portfolio-backend/
 Il progetto è stato aggiornato per soddisfare pienamente i requisiti del modulo `03_Sviluppo_Web_e_Database`.
 
 ### Autenticazione e Sicurezza
-- **Sistema di Login/Registrazione**: Accesso protetto alla dashboard Inbox.
+- **Sistema di Login/Registrazione**: Accesso protetto alla dashboard Inbox con username e password.
+- **OAuth 2.0 (Google e GitHub)**: Login social tramite i bottoni "Accedi con Google" / "Accedi con GitHub" nella pagina di autenticazione. I provider OAuth creano automaticamente un account nel DB al primo accesso.
 - **Password Hashing**: Le password sono gestite in modo sicuro tramite `werkzeug.security` (hashing PBKDF2), garantendo che nessuna credenziale sia salvata in chiaro nel database.
 - **Gestione Sessioni**: Utilizzo di sessioni Flask per proteggere le rotte.
 
@@ -84,6 +86,8 @@ Il progetto è stato aggiornato per soddisfare pienamente i requisiti del modulo
 - **Ricerca Intelligente**: Filtra i messaggi per nome, email o contenuto testuale.
 - **Sistema Preferiti**: Possibilità di contrassegnare i messaggi importanti con una stella (★) tramite interazioni asincrone.
 - **Filtri**: Visualizzazione rapida di tutti i messaggi o solo dei preferiti.
+- **Eliminazione Messaggi**: Pulsante 🗑 per ogni messaggio che elimina definitivamente il contatto dal database con animazione `fadeOut`, previa conferma utente.
+- **Anti-spam**: Il form di contatto del portfolio è protetto da un rate limiter per IP: massimo **3 messaggi ogni 10 minuti**. Tentativi eccedenti ricevono una risposta `429 Too Many Requests`.
 
 ### Documentazione Tecnica
 Tutta la progettazione concettuale è disponibile nella cartella `docs/`:
