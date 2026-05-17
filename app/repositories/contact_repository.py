@@ -31,3 +31,9 @@ def toggle_favorite(contact_id):
         (contact_id,)
     )
     db.commit()
+
+def delete_contact(contact_id):
+    """Elimina definitivamente un messaggio dal database."""
+    db = get_db()
+    db.execute('DELETE FROM contacts WHERE id = ?', (contact_id,))
+    db.commit()

@@ -12,20 +12,26 @@ logger = logging.getLogger(__name__)
 # Blueprint per le rotte API
 bp = Blueprint('api', __name__, url_prefix='/api')
 
-# --- RATE LIMITER IN MEMORIA (anti-spam Arus) ---
+# --- RATE LIMITER IN MEMORIA ---
 # Struttura: { "ip": [timestamp1, timestamp2, ...] }
 _rate_store = defaultdict(list)
-RATE_LIMIT = 10       # max richieste
-RATE_WINDOW = 60      # in secondi
 
-def _is_rate_limited(ip: str) -> bool:
+# Limiti per Arus (chatbot)
+ARUS_RATE_LIMIT  = 10
+ARUS_RATE_WINDOW = 60
+
+# Limiti anti-spam per il form contatti (più severi)
+CONTACT_RATE_LIMIT  = 3
+CONTACT_RATE_WINDOW = 600  # 10 minuti
+
+def _is_rate_limited(ip: str, limit: int, window: int, store_key_suffix: str = '') -> bool:
     """Restituisce True se l'IP ha superato il limite di richieste."""
+    key = ip + store_key_suffix
     now = time.time()
-    # Mantieni solo i timestamp nell'ultima finestra
-    _rate_store[ip] = [t for t in _rate_store[ip] if now - t < RATE_WINDOW]
-    if len(_rate_store[ip]) >= RATE_LIMIT:
+    _rate_store[key] = [t for t in _rate_store[key] if now - t < window]
+    if len(_rate_store[key]) >= limit:
         return True
-    _rate_store[ip].append(now)
+    _rate_store[key].append(now)
     return False
 
 
@@ -35,6 +41,15 @@ def _is_rate_limited(ip: str) -> bool:
 def add_contact():
     """Riceve un messaggio dal form contatti e lo salva su SQLite."""
     logger.info("Ricevuta richiesta per /api/contact")
+
+    # Anti-spam: max 3 messaggi ogni 10 minuti per IP
+    ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+    if ip:
+        ip = ip.split(',')[0].strip()
+    if _is_rate_limited(ip, CONTACT_RATE_LIMIT, CONTACT_RATE_WINDOW, ':contact'):
+        logger.warning(f"Anti-spam: troppe richieste dal form per IP {ip}")
+        return jsonify({"error": "Hai inviato troppi messaggi. Riprova tra qualche minuto."}), 429
+
     data = request.get_json()
     
     if not data:
@@ -81,6 +96,18 @@ def toggle_favorite(contact_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@bp.route('/contacts/<int:contact_id>', methods=['DELETE'])
+@login_required
+def delete_contact(contact_id):
+    """Elimina definitivamente un messaggio dal database."""
+    try:
+        contact_repository.delete_contact(contact_id)
+        logger.info(f"Messaggio {contact_id} eliminato.")
+        return jsonify({"success": "Messaggio eliminato"}), 200
+    except Exception as e:
+        logger.error(f"Errore eliminazione contatto {contact_id}: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
 
 # --- ROTTA ARUS AI ---
 
@@ -96,7 +123,7 @@ def arus_chat():
     if ip:
         ip = ip.split(',')[0].strip()  # prende il primo IP in caso di proxy
     
-    if _is_rate_limited(ip):
+    if _is_rate_limited(ip, ARUS_RATE_LIMIT, ARUS_RATE_WINDOW, ':arus'):
         logger.warning(f"Rate limit raggiunto per IP: {ip}")
         return jsonify({"error": "Troppe richieste. Aspetta un momento prima di scrivere ancora."}), 429
 
